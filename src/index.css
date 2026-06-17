@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Dogar Welfare Trust — brand theme
+ * Light: clean + trustworthy | Dark: modern + professional
+ */
+:root {
+  --background: #f2f2f2;
+  --foreground: #1f2933;
+  --card: #ffffff;
+  --primary: #e07a21;
+  --secondary: #e53935;
+  --accent: #3a9d8f;
+  /* Navy for secondary text / deep UI in light */
+  --muted: #2f3e4e;
+  --border: #d8dce0;
+  --input-border: #cfd6dd;
+  --ring: #e07a21;
+  --on-primary: #ffffff;
+  --on-secondary: #ffffff;
+  --on-accent: #ffffff;
+  /* Softer than foreground for body secondary copy */
+  --text-secondary: #3d4f5c;
+  --text-tertiary: #5c6b7a;
+  /* High-contrast text on solid --muted (navy) UI blocks */
+  --on-muted: #f8f9fa;
+  /* Depth */
+  --card-shadow: 0 4px 20px rgba(31, 41, 51, 0.08), 0 1px 3px rgba(31, 41, 51, 0.06);
+  --input-shadow: 0 1px 2px rgba(31, 41, 51, 0.05) inset, 0 0 0 0 transparent;
+  --input-shadow-focus: 0 0 0 3px rgba(224, 122, 33, 0.2);
+  --header-border: #e0e3e6;
+  --section-gap: 1.5rem;
+  --control-radius: 0.75rem;
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #e5e7eb;
+  --card: #1e1e1e;
+  --primary: #ff9a3c;
+  --secondary: #ff6b6b;
+  --accent: #4db6ac;
+  --muted: #9aa5b1;
+  --border: #2a2a2a;
+  --input-border: #3a3a3a;
+  --ring: #ff9a3c;
+  --on-primary: #ffffff;
+  --on-secondary: #ffffff;
+  --on-accent: #ffffff;
+  --text-secondary: #c5cccf;
+  --text-tertiary: #9aa5b1;
+  /* Mid-gray "muted" surfaces: prefer dark text */
+  --on-muted: #121212;
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --input-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 0 0 0 transparent;
+  --input-shadow-focus: 0 0 0 3px rgba(255, 154, 60, 0.22);
+  --header-border: #2a2a2a;
+}
+
+@layer base {
+  body {
+    @apply antialiased;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    color: var(--foreground);
+    background: var(--background);
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-semibold tracking-tight text-foreground;
+  }
+}
+
+#root {
+  @apply min-h-screen;
+}
+
+/* Branded card / panel: consistent radius, gap feel, trust shadows */
+@layer components {
+  .ui-card {
+    @apply rounded-2xl border border-border p-5 md:p-6;
+    background: var(--card);
+    box-shadow: var(--card-shadow);
+  }
+
+  .ui-field {
+    @apply w-full rounded-2xl border border-border;
+    background: var(--card);
+    min-height: 2.75rem;
+    box-shadow: var(--input-shadow);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .ui-field:focus,
+  .ui-field:focus-visible {
+    @apply outline-none;
+    border-color: var(--primary) !important;
+    box-shadow: var(--input-shadow), var(--input-shadow-focus) !important;
+  }
+
+  .ui-label {
+    @apply text-xs font-medium uppercase tracking-[0.18em] text-foreground opacity-70;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply border backdrop-blur-sm;
+    border-color: var(--header-border);
+    background: color-mix(in srgb, var(--card) 88%, transparent);
+    box-shadow: var(--card-shadow);
+  }
+  .dark .glass {
+    @apply border-white/10;
+    background: color-mix(in srgb, var(--card) 90%, #000);
+  }
+}
+
+@layer utilities {
+  .text-subtle {
+    color: var(--text-secondary);
+  }
+  .text-faint {
+    color: var(--text-tertiary);
+  }
+  .text-secondary-line {
+    color: var(--text-secondary);
+  }
+  .text-tertiary-line {
+    color: var(--text-tertiary);
+  }
+}
