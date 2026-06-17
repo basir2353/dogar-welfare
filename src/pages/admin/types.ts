@@ -3,6 +3,8 @@ export type KpiPayload = {
   totalPosts: number;
   totalCampaigns: number;
   totalDonations: number;
+  newContactMessages?: number;
+  totalContactMessages?: number;
 };
 
 export type MatrimonialWithImages = {

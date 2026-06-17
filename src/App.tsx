@@ -19,8 +19,10 @@ import { AdminMembersPage } from "@/pages/admin/admin-members-page";
 import { AdminCommunityPage } from "@/pages/admin/admin-community-page";
 import { AdminProfileOptionsPage } from "@/pages/admin/admin-profile-options-page";
 import { AdminLandingPage } from "@/pages/admin/admin-landing-page";
+import { AdminContactPage } from "@/pages/admin/admin-contact-page";
 import { SystemAdminPage } from "@/pages/system-admin-page";
 import { AboutPage } from "@/pages/about-page";
+import { ContactPage } from "@/pages/contact-page";
 import { AdminAboutPage } from "@/pages/admin-about-page";
 import { AuthPage } from "@/pages/auth-page";
 import { AdminAuthPage } from "@/pages/admin-auth-page";
@@ -112,6 +114,7 @@ function App() {
         <Route path="/" element={<AppShell />}>
           <Route index element={<LandingPage />} />
           <Route path="about" element={<AboutPage />} />
+          <Route path="contact" element={<ContactPage />} />
           <Route path="donations" element={<DonationsPage />} />
           <Route path="community" element={<CommunityPage />} />
           <Route path="matrimonial" element={<MatrimonialPage />} />
@@ -154,6 +157,7 @@ function App() {
           <Route path="moderation" element={<AdminModerationPage />} />
           <Route path="members" element={<AdminMembersPage />} />
           <Route path="community" element={<AdminCommunityPage />} />
+          <Route path="contact-messages" element={<AdminContactPage />} />
           <Route path="profile-options" element={<AdminProfileOptionsPage />} />
           <Route path="landing" element={<AdminLandingPage />} />
           <Route path="about" element={<AdminAboutPage />} />

@@ -12,6 +12,7 @@ import {
   MessagesSquare,
   Tags,
   Sparkles,
+  Mail,
   Search
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -41,6 +42,7 @@ const sectionTitle = (path: string): string => {
   if (path.startsWith("/admin/moderation")) return "Moderation";
   if (path.startsWith("/admin/members")) return "Members";
   if (path.startsWith("/admin/community")) return "Community";
+  if (path.startsWith("/admin/contact-messages")) return "Contact messages";
   if (path.startsWith("/admin/profile-options")) return "Biradri options";
   if (path.startsWith("/admin/landing")) return "Landing copy";
   if (path.startsWith("/admin/about")) return "About page";
@@ -85,6 +87,10 @@ export function AdminShell() {
       <NavLink to="/admin/community" className={linkClass}>
         <MessagesSquare className="h-4 w-4 shrink-0" />
         Community
+      </NavLink>
+      <NavLink to="/admin/contact-messages" className={linkClass}>
+        <Mail className="h-4 w-4 shrink-0" />
+        Contact inbox
       </NavLink>
       {canEditCms ? (
         <>
@@ -140,6 +146,9 @@ export function AdminShell() {
       </NavLink>
       <NavLink to="/admin/community" className={pillClass}>
         Posts
+      </NavLink>
+      <NavLink to="/admin/contact-messages" className={pillClass}>
+        Contact
       </NavLink>
       {canEditCms ? (
         <>

@@ -37,6 +37,7 @@ export function AppShell() {
   const labelDonations = useTranslate(UI.navDonations);
   const labelChat = useTranslate(UI.navChat);
   const labelAbout = useTranslate(UI.navAbout);
+  const labelContact = useTranslate(UI.navContact);
   const labelAdmin = useTranslate(UI.navAdmin);
   const labelSystemAdmin = useTranslate(UI.navSystemAdmin);
   const adminNavItem =
@@ -51,6 +52,7 @@ export function AppShell() {
     { to: "/donations", label: labelDonations },
     { to: "/chat", label: labelChat },
     { to: "/about", label: labelAbout },
+    { to: "/contact", label: labelContact },
     ...(adminNavItem ? [adminNavItem] : [])
   ];
   const hideChrome = location.pathname.startsWith("/profile/setup") || location.pathname.startsWith("/auth");

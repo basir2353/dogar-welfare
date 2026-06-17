@@ -379,6 +379,14 @@ export function AboutPage() {
 
           <AboutPartners partners={data.partners} />
           <AboutContactCard contact={data.contact} />
+          <div className="flex justify-center">
+            <Link
+              to="/contact"
+              className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-medium text-on-primary hover:opacity-90"
+            >
+              Send us a message →
+            </Link>
+          </div>
 
           <section
             id="about-developer"

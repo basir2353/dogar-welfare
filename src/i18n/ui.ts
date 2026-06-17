@@ -13,6 +13,7 @@ export const UI = {
   navDonations: "Donations",
   navChat: "Chat",
   navAbout: "About us",
+  navContact: "Contact us",
   navAdmin: "Admin",
   navSystemAdmin: "System admin",
   signIn: "Sign in",
