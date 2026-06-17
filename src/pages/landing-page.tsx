@@ -1,15 +1,23 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
+  ArrowUp,
+  Award,
+  BadgeCheck,
+  ChevronDown,
+  ChevronUp,
+  HandHeart,
+  Hash,
   HeartHandshake,
+  Lock,
   MessageCircle,
+  Play,
   ShieldCheck,
   Sparkles,
-  Users,
-  Award,
   TrendingUp,
-  HandHeart
+  Users,
+  Eye
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
@@ -38,15 +46,73 @@ type LandingCopy = {
   communityPreviewTitle: string;
 };
 
+type LiveStats = {
+  verifiedMembers: number;
+  totalPosts: number;
+  activeCampaigns: number;
+  interestsSent: number;
+};
+
+type TrendingTag = { tag: string; count: number; posts: number };
+
 type PublicLanding = {
   copy: LandingCopy;
   featuredProfiles: Array<{ name: string; age: number; city: string; score: number; bannerUrl: string | null }>;
   featuredCampaigns: Array<{ title: string; raised: number; goal: number; verified: boolean }>;
   communityPreviewPosts: Array<{ author: string; content: string; likes: number; comments: number }>;
+  liveStats?: LiveStats;
+  trendingHashtags?: TrendingTag[];
 };
 
-const FEATURE_ICONS = [ShieldCheck, Users, HandHeart, Sparkles];
+const FEATURE_ICONS = [ShieldCheck, Users, HandHeart, Sparkles, Award, Eye, Lock, TrendingUp];
 const STEP_ICONS = [Users, HeartHandshake, MessageCircle];
+const TRUST_BADGES = [
+  { icon: BadgeCheck, label: "Verified", desc: "Staff-reviewed profiles" },
+  { icon: Lock, label: "Secure", desc: "Private data protection" },
+  { icon: Eye, label: "Transparent", desc: "Open welfare tracking" }
+];
+
+const STATIC_FAQS = [
+  {
+    id: "f1",
+    question: "Do I need an account to browse rishta profiles?",
+    answer: "You can explore featured profiles and community posts as a guest. Sign up when you are ready to send interest or post."
+  },
+  {
+    id: "f2",
+    question: "How are welfare campaigns verified?",
+    answer: "Active campaigns are reviewed by our team and show raised amounts versus goals on the Donations page."
+  },
+  {
+    id: "f3",
+    question: "Is the community moderated?",
+    answer: "Yes. Posts and profiles go through moderation so families can connect in a respectful, safe space."
+  }
+];
+
+const STATIC_TESTIMONIALS = [
+  { name: "Family from Lahore", role: "Member", quote: "We found a respectful match through Dogar with clear verification." },
+  { name: "Community donor", role: "Supporter", quote: "Campaign updates are transparent — we know where help goes." },
+  { name: "New member", role: "Rishta seeker", quote: "The platform feels modern yet rooted in family values." }
+];
+
+const WHY_CHOOSE = [
+  { title: "Verified rishta", desc: "Profiles reviewed before they go live — not open listings.", highlight: "Dogar" },
+  { title: "Welfare + community", desc: "Donations, campaigns, and social feed in one trusted place.", highlight: "Dogar" },
+  { title: "Documents on About", desc: "Awards, SODO, and registration visible for family peace of mind.", highlight: "Dogar" }
+];
+
+const PARTNER_LOGOS = ["Welfare partners", "Community volunteers", "Local donors", "Family networks"];
+
+const SECTION_PILLS = [
+  { id: "landing-features", label: "Features" },
+  { id: "landing-stats", label: "Live stats" },
+  { id: "landing-how", label: "How it works" },
+  { id: "landing-profiles", label: "Profiles" },
+  { id: "landing-impact", label: "Impact" },
+  { id: "landing-community", label: "Community" },
+  { id: "landing-faq", label: "FAQ" }
+];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -57,6 +123,81 @@ const fadeUp = {
   })
 };
 
+function useAnimatedCounter(target: number, duration = 1200) {
+  const [value, setValue] = useState(0);
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (started.current || target <= 0) {
+      setValue(target);
+      return;
+    }
+    started.current = true;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      setValue(Math.round(target * progress));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+
+  return value;
+}
+
+function AnimatedStat({ label, value, icon: Icon }: { label: string; value: number; icon: typeof Users }) {
+  const animated = useAnimatedCounter(value);
+  return (
+    <motion.div
+      custom={0}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true }}
+      variants={fadeUp}
+      className="glass rounded-3xl p-6"
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+          <Icon className="h-5 w-5" />
+        </div>
+        <p className="text-sm text-subtle">{label}</p>
+      </div>
+      <p className="mt-3 text-3xl font-semibold tabular-nums">{animated.toLocaleString()}</p>
+    </motion.div>
+  );
+}
+
+function LandingFaq() {
+  const [openId, setOpenId] = useState<string | null>(STATIC_FAQS[0]?.id ?? null);
+  return (
+    <section id="landing-faq" className="space-y-6">
+      <h2 className="text-2xl font-semibold md:text-3xl">Frequently asked questions</h2>
+      <div className="space-y-2">
+        {STATIC_FAQS.map((faq) => {
+          const open = openId === faq.id;
+          return (
+            <div key={faq.id} className="glass overflow-hidden rounded-2xl">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+                onClick={() => setOpenId(open ? null : faq.id)}
+              >
+                <span className="font-medium">{faq.question}</span>
+                {open ? <ChevronUp className="h-5 w-5 shrink-0 text-primary" /> : <ChevronDown className="h-5 w-5 shrink-0 text-subtle" />}
+              </button>
+              {open ? (
+                <div className="border-t border-border/50 px-5 py-4">
+                  <p className="text-sm text-subtle">{faq.answer}</p>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export function LandingPage() {
   const navigate = useNavigate();
   const impact = useImpact();
@@ -64,6 +205,7 @@ export function LandingPage() {
   const profile = useAuthStore((s) => s.profile);
   const [data, setData] = useState<PublicLanding | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const errMsg = useTranslate(UI.homeLoadError);
   const loadingMsg = useTranslate(UI.homeLoading);
   const guestHint = useTranslate(UI.guestBrowseHint);
@@ -97,10 +239,23 @@ export function LandingPage() {
     void load();
   }, []);
 
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const copy = data?.copy;
   const totalRaised = impact?.totalRaised ?? 0;
   const uniqueDonors = impact?.uniqueDonors ?? 0;
   const activeCampaigns = impact?.activeCampaigns ?? 0;
+  const liveStats = data?.liveStats ?? {
+    verifiedMembers: 0,
+    totalPosts: 0,
+    activeCampaigns: 0,
+    interestsSent: 0
+  };
+  const trendingHashtags = data?.trendingHashtags ?? [];
 
   if (!data) {
     return (
@@ -114,11 +269,19 @@ export function LandingPage() {
     { icon: ShieldCheck, title: "Verified profiles", desc: "Every rishta profile is reviewed by our team before going live." },
     { icon: TrendingUp, title: "Trending community", desc: "Share updates, use hashtags, and connect like a modern social feed." },
     { icon: HandHeart, title: "Transparent welfare", desc: "Track donations and campaign impact with full visibility." },
-    { icon: Award, title: "Trust & documents", desc: "Awards, SODO records, and certificates on our About page." }
+    { icon: Award, title: "Trust & documents", desc: "Awards, SODO records, and certificates on our About page." },
+    { icon: MessageCircle, title: "Private chat", desc: "Connect safely after mutual interest — no public phone numbers." },
+    { icon: Users, title: "Family-first design", desc: "Built for Dogar families with Urdu and Punjabi support." },
+    { icon: Hash, title: "Hashtag discovery", desc: "Find posts by topic — welfare, rishta tips, and local events." },
+    { icon: Sparkles, title: "One platform", desc: "Rishta, donations, community, and trust docs together." }
   ];
 
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <div className="space-y-28 py-8">
+    <div className="relative space-y-28 py-8 pb-24 md:pb-8">
       {!user ? (
         <motion.section
           initial={{ opacity: 0, y: 12 }}
@@ -193,7 +356,65 @@ export function LandingPage() {
         </motion.div>
       </section>
 
-      <section className="space-y-8">
+      <div className="flex flex-wrap justify-center gap-2">
+        {SECTION_PILLS.map((pill) => (
+          <button
+            key={pill.id}
+            type="button"
+            onClick={() => scrollToSection(pill.id)}
+            className="rounded-full border border-border/60 bg-card px-4 py-1.5 text-sm transition hover:border-primary/40 hover:bg-primary/5"
+          >
+            {pill.label}
+          </button>
+        ))}
+      </div>
+
+      {trendingHashtags.length > 0 ? (
+        <section className="glass flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3">
+          <TrendingUp className="h-5 w-5 shrink-0 text-primary" />
+          <span className="text-sm font-medium">Trending:</span>
+          {trendingHashtags.map((item) => (
+            <Link
+              key={item.tag}
+              to="/community"
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary transition hover:bg-primary/20"
+            >
+              <Hash className="h-3.5 w-3.5" />
+              {item.tag}
+              <span className="text-xs text-subtle">({item.posts})</span>
+            </Link>
+          ))}
+        </section>
+      ) : null}
+
+      <div className="flex flex-wrap items-center justify-center gap-6">
+        {TRUST_BADGES.map((badge) => {
+          const Icon = badge.icon;
+          return (
+            <div key={badge.label} className="flex items-center gap-2 text-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <Icon className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="font-semibold">{badge.label}</p>
+                <p className="text-xs text-subtle">{badge.desc}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <section id="landing-stats" className="space-y-6">
+        <h2 className="text-center text-2xl font-semibold md:text-3xl">Live community stats</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <AnimatedStat label="Verified members" value={liveStats.verifiedMembers} icon={BadgeCheck} />
+          <AnimatedStat label="Community posts" value={liveStats.totalPosts} icon={MessageCircle} />
+          <AnimatedStat label="Active campaigns" value={liveStats.activeCampaigns} icon={HandHeart} />
+          <AnimatedStat label="Interests sent" value={liveStats.interestsSent} icon={HeartHandshake} />
+        </div>
+      </section>
+
+      <section id="landing-features" className="space-y-8">
         <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={fadeUp} custom={0}>
           <h2 className="text-center text-2xl font-semibold md:text-3xl">Everything in one trusted place</h2>
           <p className="mx-auto mt-2 max-w-2xl text-center text-subtle">
@@ -231,6 +452,34 @@ export function LandingPage() {
       </section>
 
       <section className="space-y-6">
+        <h2 className="text-center text-2xl font-semibold md:text-3xl">Why choose Dogar?</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {WHY_CHOOSE.map((item) => (
+            <div key={item.title} className="glass rounded-3xl p-6">
+              <p className="text-xs font-medium uppercase tracking-wider text-primary">{item.highlight}</p>
+              <h3 className="mt-2 text-lg font-semibold">{item.title}</h3>
+              <p className="mt-2 text-sm text-subtle">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="glass rounded-3xl border border-primary/25 bg-gradient-to-r from-primary/10 to-accent/10 p-8 text-center md:p-12">
+        <h2 className="text-2xl font-bold md:text-3xl">Ready to join Dogar Welfare?</h2>
+        <p className="mx-auto mt-3 max-w-xl text-subtle">
+          Create your profile, explore verified rishta, and support welfare campaigns today.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link to="/auth" state={{ mode: "signup" }} className={cn(buttonVariants({ variant: "primary", size: "md" }), "inline-flex")}>
+            Sign up free
+          </Link>
+          <Link to="/matrimonial" className={cn(buttonVariants({ variant: "outline", size: "md" }), "inline-flex")}>
+            Browse rishta
+          </Link>
+        </div>
+      </section>
+
+      <section id="landing-how" className="space-y-6">
         <TranslatedText
           as="h2"
           text={copy?.howItWorksTitle}
@@ -260,6 +509,28 @@ export function LandingPage() {
         </div>
       </section>
 
+      <section className="glass overflow-hidden rounded-3xl">
+        <div className="grid md:grid-cols-2">
+          <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20 md:aspect-auto">
+            <Link to="/about" className="flex flex-col items-center gap-3 text-primary transition hover:scale-105">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
+                <Play className="h-8 w-8" />
+              </div>
+              <span className="text-sm font-medium">Watch our story on About →</span>
+            </Link>
+          </div>
+          <div className="flex flex-col justify-center p-8">
+            <h2 className="text-2xl font-semibold">See how Dogar helps families</h2>
+            <p className="mt-3 text-subtle">
+              Visit the About page for our video, timeline, trust documents, and team behind the platform.
+            </p>
+            <Link to="/about" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 inline-flex w-fit")}>
+              Go to About page
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {profile?.fullName && profile?.city ? (
         <motion.section
           initial={{ opacity: 0, scale: 0.98 }}
@@ -280,13 +551,61 @@ export function LandingPage() {
         </motion.section>
       ) : null}
 
-      <section className="space-y-5">
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold">Explore community topics</h2>
+        <div className="flex flex-wrap gap-2">
+          {(trendingHashtags.length > 0
+            ? trendingHashtags.map((t) => t.tag)
+            : ["dogarwelfare", "rishta", "lahore", "welfare", "family"]
+          ).map((tag) => (
+            <Link
+              key={tag}
+              to="/community"
+              className="inline-flex items-center gap-1 rounded-full border border-border/60 px-3 py-1.5 text-sm transition hover:border-primary/40 hover:bg-primary/5"
+            >
+              <Hash className="h-3.5 w-3.5 text-primary" />
+              {tag}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-center text-lg font-semibold text-subtle">Trusted by families & partners</h2>
+        <div className="flex flex-wrap items-center justify-center gap-6">
+          {PARTNER_LOGOS.map((name) => (
+            <div
+              key={name}
+              className="flex h-14 min-w-[8rem] items-center justify-center rounded-2xl border border-border/60 bg-card px-6 text-sm font-medium text-subtle"
+            >
+              {name}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-6">
+        <h2 className="text-2xl font-semibold md:text-3xl">What families say</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {STATIC_TESTIMONIALS.map((item) => (
+            <blockquote key={item.name} className="glass rounded-3xl p-6">
+              <p className="text-sm italic text-foreground/90">&ldquo;{item.quote}&rdquo;</p>
+              <footer className="mt-4">
+                <p className="font-semibold">{item.name}</p>
+                <p className="text-xs text-subtle">{item.role}</p>
+              </footer>
+            </blockquote>
+          ))}
+        </div>
+      </section>
+
+      <section id="landing-profiles" className="space-y-5">
         <TranslatedText
           as="h2"
           text={copy?.featuredProfilesTitle}
           className="text-2xl font-semibold md:text-3xl"
         />
-        {!data || data.featuredProfiles.length === 0 ? (
+        {data.featuredProfiles.length === 0 ? (
           <p className="text-subtle">{noProfiles}</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
@@ -318,7 +637,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="space-y-5">
+      <section id="landing-impact" className="space-y-5">
         <TranslatedText
           as="h2"
           text={copy?.donationImpactTitle}
@@ -353,7 +672,7 @@ export function LandingPage() {
           })}
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          {!data || data.featuredCampaigns.length === 0 ? (
+          {data.featuredCampaigns.length === 0 ? (
             <p className="text-subtle md:col-span-2">{noCamp}</p>
           ) : (
             data.featuredCampaigns.map((campaign) => (
@@ -370,13 +689,13 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="space-y-5">
+      <section id="landing-community" className="space-y-5">
         <TranslatedText
           as="h2"
           text={copy?.communityPreviewTitle}
           className="text-2xl font-semibold md:text-3xl"
         />
-        {!data || data.communityPreviewPosts.length === 0 ? (
+        {data.communityPreviewPosts.length === 0 ? (
           <p className="text-subtle">{noPosts}</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -394,6 +713,39 @@ export function LandingPage() {
           </div>
         )}
       </section>
+
+      <LandingFaq />
+
+      {showScrollTop ? (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-20 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-on-primary shadow-lg transition hover:brightness-110 md:bottom-8"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </button>
+      ) : null}
+
+      {!user ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-card/95 p-3 backdrop-blur-md md:hidden">
+          <div className="container flex gap-2">
+            <Link
+              to="/auth"
+              state={{ mode: "signup" }}
+              className={cn(buttonVariants({ variant: "primary", size: "sm" }), "flex-1 justify-center")}
+            >
+              Sign up
+            </Link>
+            <Link
+              to="/matrimonial"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "flex-1 justify-center")}
+            >
+              Find rishta
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
