@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { Navigate } from "react-router-dom";
-import type { AboutBlock, AboutContent } from "@/shared";
+import type { AboutAward, AboutBlock, AboutContent, AboutDocument } from "@/shared";
 import { DEFAULT_ABOUT_CONTENT } from "@/shared";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,15 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 function newId() {
   return globalThis.crypto?.randomUUID?.() ?? `b-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+async function uploadAdminFile(file: File): Promise<string | null> {
+  const body = new FormData();
+  body.append("file", file);
+  const { data } = await api.post("/admin/upload", body, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+  return data.success ? ((data.data as { url?: string })?.url ?? null) : null;
 }
 
 export function AdminAboutPage() {
@@ -28,13 +37,18 @@ export function AdminAboutPage() {
     try {
       const { data } = await api.get("/admin/content/about");
       if (data.success && data.data) {
-        setForm(data.data as AboutContent);
+        const payload = data.data as AboutContent;
+        setForm({
+          ...payload,
+          awards: payload.awards ?? [],
+          documents: payload.documents ?? []
+        });
       } else {
-        setForm({ ...DEFAULT_ABOUT_CONTENT, blocks: [...DEFAULT_ABOUT_CONTENT.blocks] });
+        setForm({ ...DEFAULT_ABOUT_CONTENT, blocks: [...DEFAULT_ABOUT_CONTENT.blocks], awards: [...DEFAULT_ABOUT_CONTENT.awards], documents: [...DEFAULT_ABOUT_CONTENT.documents] });
         setMessage("Server returned no About payload; showing defaults. Apply Prisma migrations if the SiteAbout table is missing.");
       }
     } catch {
-      setForm({ ...DEFAULT_ABOUT_CONTENT, blocks: [...DEFAULT_ABOUT_CONTENT.blocks] });
+      setForm({ ...DEFAULT_ABOUT_CONTENT, blocks: [...DEFAULT_ABOUT_CONTENT.blocks], awards: [...DEFAULT_ABOUT_CONTENT.awards], documents: [...DEFAULT_ABOUT_CONTENT.documents] });
       setMessage(
         "Could not load About from the API (network, auth, or database). Showing defaults — fix API/DB then refresh. Saving may fail until the SiteAbout table exists."
       );
@@ -92,6 +106,73 @@ export function AdminAboutPage() {
     });
   };
 
+  const setAward = (id: string, patch: Partial<AboutAward>) => {
+    setForm((prev) => {
+      if (!prev) return prev;
+      return { ...prev, awards: prev.awards.map((a) => (a.id === id ? { ...a, ...patch } : a)) };
+    });
+  };
+
+  const addAward = () => {
+    setForm((prev) => {
+      if (!prev) return prev;
+      const award: AboutAward = {
+        id: newId(),
+        order: prev.awards.length,
+        title: "New award",
+        year: new Date().getFullYear().toString(),
+        description: "Describe the award or recognition.",
+        imageUrl: undefined
+      };
+      return { ...prev, awards: [...prev.awards, award] };
+    });
+  };
+
+  const removeAward = (id: string) => {
+    setForm((prev) => (prev ? { ...prev, awards: prev.awards.filter((a) => a.id !== id) } : prev));
+  };
+
+  const setDocument = (id: string, patch: Partial<AboutDocument>) => {
+    setForm((prev) => {
+      if (!prev) return prev;
+      return { ...prev, documents: prev.documents.map((d) => (d.id === id ? { ...d, ...patch } : d)) };
+    });
+  };
+
+  const addDocument = () => {
+    setForm((prev) => {
+      if (!prev) return prev;
+      const doc: AboutDocument = {
+        id: newId(),
+        order: prev.documents.length,
+        title: "New document",
+        description: "Upload a PDF or image certificate.",
+        fileUrl: "",
+        category: "sodo"
+      };
+      return { ...prev, documents: [...prev.documents, doc] };
+    });
+  };
+
+  const removeDocument = (id: string) => {
+    setForm((prev) => (prev ? { ...prev, documents: prev.documents.filter((d) => d.id !== id) } : prev));
+  };
+
+  const handleFileUpload = async (file: File, onUrl: (url: string) => void) => {
+    setMessage("Uploading…");
+    try {
+      const url = await uploadAdminFile(file);
+      if (url) {
+        onUrl(url);
+        setMessage("File uploaded. Save the page to publish.");
+      } else {
+        setMessage("Upload failed.");
+      }
+    } catch {
+      setMessage("Upload failed. Check file type (image or PDF) and try again.");
+    }
+  };
+
   const save = async () => {
     if (!form) return;
     if (form.blocks.length === 0) {
@@ -103,7 +184,9 @@ export function AdminAboutPage() {
     try {
       const { data } = await api.put("/admin/content/about", {
         ...form,
-        blocks: form.blocks.map((b, i) => ({ ...b, order: i }))
+        blocks: form.blocks.map((b, i) => ({ ...b, order: i })),
+        awards: form.awards.map((a, i) => ({ ...a, order: i })),
+        documents: form.documents.map((d, i) => ({ ...d, order: i }))
       });
       if (data.success && data.data) {
         setForm(data.data as AboutContent);
@@ -176,6 +259,98 @@ export function AdminAboutPage() {
             value={b.imageUrl ?? ""}
             onChange={(e) => setBlock(b.id, { imageUrl: e.target.value || undefined })}
             placeholder="Image URL (optional)"
+          />
+        </Card>
+      ))}
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Awards & recognition</h2>
+        <Button type="button" size="sm" variant="outline" onClick={addAward}>
+          Add award
+        </Button>
+      </div>
+      {form.awards.map((a, i) => (
+        <Card key={a.id} className="space-y-3 rounded-2xl border border-border/80 bg-card p-5 shadow-sm md:p-6">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-subtle">Award {i + 1}</p>
+            <Button type="button" size="sm" variant="ghost" className="text-secondary" onClick={() => removeAward(a.id)}>
+              Remove
+            </Button>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Input value={a.title} onChange={(e) => setAward(a.id, { title: e.target.value })} placeholder="Award title" />
+            <Input value={a.year ?? ""} onChange={(e) => setAward(a.id, { year: e.target.value || undefined })} placeholder="Year (optional)" />
+          </div>
+          <textarea
+            value={a.description}
+            onChange={(e) => setAward(a.id, { description: e.target.value })}
+            className="min-h-24 w-full rounded-2xl border border-border bg-card p-3 text-sm outline-none focus:border-primary"
+            placeholder="Description"
+          />
+          <Input
+            value={a.imageUrl ?? ""}
+            onChange={(e) => setAward(a.id, { imageUrl: e.target.value || undefined })}
+            placeholder="Certificate image URL (optional)"
+          />
+          <Input
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              const f = e.target.files?.[0];
+              if (f) void handleFileUpload(f, (url) => setAward(a.id, { imageUrl: url }));
+              e.target.value = "";
+            }}
+          />
+        </Card>
+      ))}
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Trust documents & SODO</h2>
+        <Button type="button" size="sm" variant="outline" onClick={addDocument}>
+          Add document
+        </Button>
+      </div>
+      {form.documents.map((d, i) => (
+        <Card key={d.id} className="space-y-3 rounded-2xl border border-border/80 bg-card p-5 shadow-sm md:p-6">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-subtle">Document {i + 1}</p>
+            <Button type="button" size="sm" variant="ghost" className="text-secondary" onClick={() => removeDocument(d.id)}>
+              Remove
+            </Button>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Input value={d.title} onChange={(e) => setDocument(d.id, { title: e.target.value })} placeholder="Document title" />
+            <select
+              value={d.category}
+              onChange={(e) => setDocument(d.id, { category: e.target.value as AboutDocument["category"] })}
+              className="rounded-2xl border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"
+            >
+              <option value="registration">Registration</option>
+              <option value="sodo">SODO / Society</option>
+              <option value="certificate">Certificate</option>
+              <option value="award">Award</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <textarea
+            value={d.description ?? ""}
+            onChange={(e) => setDocument(d.id, { description: e.target.value || undefined })}
+            className="min-h-20 w-full rounded-2xl border border-border bg-card p-3 text-sm outline-none focus:border-primary"
+            placeholder="Short description (optional)"
+          />
+          <Input
+            value={d.fileUrl}
+            onChange={(e) => setDocument(d.id, { fileUrl: e.target.value })}
+            placeholder="File URL (/uploads/… or https://…)"
+          />
+          <Input
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              const f = e.target.files?.[0];
+              if (f) void handleFileUpload(f, (url) => setDocument(d.id, { fileUrl: url }));
+              e.target.value = "";
+            }}
           />
         </Card>
       ))}

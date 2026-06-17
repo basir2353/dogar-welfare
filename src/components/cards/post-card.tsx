@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle } from "lucide-react";
 import { splitCommunityPostBodyAndLink } from "@/shared";
+import { PostContentWithHashtags } from "@/components/community/post-content";
 import { Card } from "@/components/ui/card";
 import { useTranslatedText } from "@/hooks/use-translated-content";
 import { buttonVariants } from "@/components/ui/button";
@@ -30,6 +31,7 @@ type PostCardProps = {
   commentsList?: CommentItem[];
   onAddComment?: (text: string) => void | Promise<void>;
   commentSubmitPending?: boolean;
+  onHashtagClick?: (tag: string) => void;
 };
 
 export function PostCard({
@@ -46,7 +48,8 @@ export function PostCard({
   likePending = false,
   commentsList = [],
   onAddComment,
-  commentSubmitPending = false
+  commentSubmitPending = false,
+  onHashtagClick
 }: PostCardProps) {
   const { body, linkUrl } = splitCommunityPostBodyAndLink(content);
   const tAuthor = useTranslatedText(author);
@@ -81,7 +84,11 @@ export function PostCard({
     <motion.div whileHover={{ scale: 1.01 }}>
       <Card className="glass">
         <p className="text-sm font-semibold">{tAuthor}</p>
-        <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/95">{tBody}</p>
+        <PostContentWithHashtags
+          text={tBody}
+          className="mt-2 whitespace-pre-wrap text-sm text-foreground/95"
+          onHashtagClick={onHashtagClick}
+        />
         {linkUrl ? (
           <p className="mt-2 text-sm">
             <a
