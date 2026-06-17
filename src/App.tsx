@@ -109,15 +109,33 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/admin" element={<AdminAuthPage />} />
         <Route path="/profile/setup" element={<ProtectedRoute><ProfileSetupPage /></ProtectedRoute>} />
-        <Route path="/" element={<ProtectedRoute><ProfileCompletedRoute><AppShell /></ProfileCompletedRoute></ProtectedRoute>}>
+        <Route path="/" element={<AppShell />}>
           <Route index element={<LandingPage />} />
           <Route path="about" element={<AboutPage />} />
-          <Route path="profile" element={<MyProfilePage />} />
+          <Route path="donations" element={<DonationsPage />} />
+          <Route path="community" element={<CommunityPage />} />
           <Route path="matrimonial" element={<MatrimonialPage />} />
           <Route path="matrimonial/:userId" element={<MatrimonialProfilePage />} />
-          <Route path="community" element={<CommunityPage />} />
-          <Route path="donations" element={<DonationsPage />} />
-          <Route path="chat" element={<ChatPage />} />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute>
+                <ProfileCompletedRoute>
+                  <MyProfilePage />
+                </ProfileCompletedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="chat"
+            element={
+              <ProtectedRoute>
+                <ProfileCompletedRoute>
+                  <ChatPage />
+                </ProfileCompletedRoute>
+              </ProtectedRoute>
+            }
+          />
         </Route>
         <Route
           path="/admin"

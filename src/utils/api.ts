@@ -16,6 +16,10 @@ const resolveApiBaseUrl = (): string => {
     return "http://localhost:4000/api/v1";
   }
   if (typeof window !== "undefined") {
+    // Split deploy (Vercel + Railway): set VITE_API_BASE_URL at build time.
+    console.error(
+      "[dogar] VITE_API_BASE_URL is not set. Add it in Vercel → Settings → Environment Variables."
+    );
     return `${window.location.origin}/api/v1`;
   }
   return "/api/v1";
@@ -29,12 +33,12 @@ const API_BASE_URL = resolveApiBaseUrl();
  * (avoids Helmet CORP / cross-port image issues when the API is on another port).
  */
 export const getApiMediaOrigin = (): string => {
-  if (import.meta.env.DEV && typeof window !== "undefined") {
-    return window.location.origin;
-  }
   const base = API_BASE_URL.replace(/\/$/, "");
   if (base.endsWith("/api/v1")) {
     return base.slice(0, -"/api/v1".length) || base;
+  }
+  if (import.meta.env.DEV && typeof window !== "undefined") {
+    return window.location.origin;
   }
   return base;
 };

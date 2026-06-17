@@ -6,6 +6,8 @@ import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTranslate } from "@/hooks/use-translate";
+import { UI } from "@/i18n/ui";
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { api, publicApi, setAuthToken } from "@/utils/api";
 import type { AxiosError } from "axios";
 
@@ -37,6 +39,8 @@ export function DonationsPage() {
   const [loadError, setLoadError] = useState("");
   const donateNow = useTranslate("Donate Now");
   const submitDonation = useTranslate("Submit Donation");
+  const signInToDonate = useTranslate(UI.signInToDonate);
+  const redirectToAuth = useAuthRedirect();
 
   const loadDonationData = async () => {
     setLoadError("");
@@ -88,6 +92,10 @@ export function DonationsPage() {
   }, []);
 
   const handleDonate = async () => {
+    if (!user) {
+      redirectToAuth();
+      return;
+    }
     const parsedAmount = Number(amount);
     if (!campaignId || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
       setDonateError("Enter a valid amount in PKR.");
@@ -137,6 +145,10 @@ export function DonationsPage() {
             verified={campaign.isVerified}
             donateLabel={donateNow}
             onDonate={() => {
+              if (!user) {
+                redirectToAuth();
+                return;
+              }
               setCampaignName(campaign.title);
               setCampaignId(campaign.id);
               setDonorName(profile?.fullName?.trim() || "");
@@ -155,6 +167,9 @@ export function DonationsPage() {
       {donateSuccess ? <p className="text-sm text-accent">{donateSuccess}</p> : null}
       <Modal open={open} onClose={() => setOpen(false)} title={`Donate - ${campaignName}`}>
         <div className="space-y-3">
+          {!user ? (
+            <p className="text-sm text-subtle">{signInToDonate}</p>
+          ) : null}
           <Input value={donorName} onChange={(e) => setDonorName(e.target.value)} placeholder="Full name" />
           <Input value={donorEmail} onChange={(e) => setDonorEmail(e.target.value)} placeholder="Email address" />
           <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" />

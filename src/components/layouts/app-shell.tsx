@@ -21,6 +21,7 @@ import { BrandLogoLink } from "@/components/brand/brand-logo-link";
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.user?.role);
   const profile = useAuthStore((s) => s.profile);
   const clearSession = useAuthStore((s) => s.clearSession);
@@ -29,6 +30,8 @@ export function AppShell() {
   const viewProfile = useTranslate(UI.viewProfile);
   const completeProfile = useTranslate(UI.completeProfile);
   const logoutLabel = useTranslate(UI.logout);
+  const signInLabel = useTranslate(UI.signIn);
+  const signUpLabel = useTranslate(UI.signUp);
   const labelRishta = useTranslate(UI.navRishta);
   const labelCommunity = useTranslate(UI.navCommunity);
   const labelDonations = useTranslate(UI.navDonations);
@@ -88,28 +91,47 @@ export function AppShell() {
               <div className="flex shrink-0 items-center gap-1.5">
                 <ThemeToggle />
                 <LanguageSwitcher variant="icon" />
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    className={cn(
-                      buttonVariants({ variant: "outline", size: "sm" }),
-                      "h-9 w-9 shrink-0 rounded-full p-0"
-                    )}
-                    aria-label={profile?.fullName && profile?.city ? viewProfile : completeProfile}
-                  >
-                    <CircleUser className="h-5 w-5" aria-hidden />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link to={profile?.fullName && profile?.city ? "/profile" : "/profile/setup"}>
-                        {profile?.fullName && profile?.city ? viewProfile : completeProfile}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-secondary" onSelect={() => logout()}>
-                      {logoutLabel}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      className={cn(
+                        buttonVariants({ variant: "outline", size: "sm" }),
+                        "h-9 w-9 shrink-0 rounded-full p-0"
+                      )}
+                      aria-label={profile?.fullName && profile?.city ? viewProfile : completeProfile}
+                    >
+                      <CircleUser className="h-5 w-5" aria-hidden />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link to={profile?.fullName && profile?.city ? "/profile" : "/profile/setup"}>
+                          {profile?.fullName && profile?.city ? viewProfile : completeProfile}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-secondary" onSelect={() => logout()}>
+                        {logoutLabel}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Link
+                      to="/auth"
+                      state={{ from: location }}
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }), "whitespace-nowrap")}
+                    >
+                      {signInLabel}
+                    </Link>
+                    <Link
+                      to="/auth"
+                      state={{ from: location, mode: "signup" }}
+                      className={cn(buttonVariants({ variant: "primary", size: "sm" }), "whitespace-nowrap")}
+                    >
+                      {signUpLabel}
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>

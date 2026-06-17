@@ -1,28 +1,32 @@
-export enum UserRole {
-  USER = "USER",
-  MODERATOR = "MODERATOR",
-  ADMIN = "ADMIN",
-  SUPER_ADMIN = "SUPER_ADMIN"
-}
+export const UserRole = {
+  USER: "USER",
+  MODERATOR: "MODERATOR",
+  ADMIN: "ADMIN",
+  SUPER_ADMIN: "SUPER_ADMIN"
+} as const;
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
-export enum VerificationStatus {
-  PENDING = "PENDING",
-  VERIFIED = "VERIFIED",
-  REJECTED = "REJECTED"
-}
+export const VerificationStatus = {
+  PENDING: "PENDING",
+  VERIFIED: "VERIFIED",
+  REJECTED: "REJECTED"
+} as const;
+export type VerificationStatus = (typeof VerificationStatus)[keyof typeof VerificationStatus];
 
-export enum CampaignStatus {
-  DRAFT = "DRAFT",
-  ACTIVE = "ACTIVE",
-  COMPLETED = "COMPLETED",
-  SUSPENDED = "SUSPENDED"
-}
+export const CampaignStatus = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+  SUSPENDED: "SUSPENDED"
+} as const;
+export type CampaignStatus = (typeof CampaignStatus)[keyof typeof CampaignStatus];
 
-export enum InterestStatus {
-  SENT = "SENT",
-  ACCEPTED = "ACCEPTED",
-  REJECTED = "REJECTED"
-}
+export const InterestStatus = {
+  SENT: "SENT",
+  ACCEPTED: "ACCEPTED",
+  REJECTED: "REJECTED"
+} as const;
+export type InterestStatus = (typeof InterestStatus)[keyof typeof InterestStatus];
 
 export type ApiResponse<T> = {
   success: boolean;

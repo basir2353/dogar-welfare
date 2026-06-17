@@ -1,11 +1,13 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import { PlusCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PostCard } from "@/components/cards/post-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTranslate } from "@/hooks/use-translate";
+import { UI } from "@/i18n/ui";
 import { Card } from "@/components/ui/card";
-import { api } from "@/utils/api";
+import { api, publicApi } from "@/utils/api";
 import { useAuthStore } from "@/store/auth-store";
 import type { AxiosError } from "axios";
 
@@ -35,6 +37,7 @@ type PostView = {
 };
 
 export function CommunityPage() {
+  const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
   const [author, setAuthor] = useState(profile?.fullName ?? "Member");
   const [content, setContent] = useState("");
@@ -46,31 +49,38 @@ export function CommunityPage() {
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [message, setMessage] = useState("");
   const createPostLabel = useTranslate("Create Post");
+  const signInToPost = useTranslate(UI.signInToPost);
+  const signInLabel = useTranslate(UI.signIn);
+
+  const mapPosts = (rows: CommunityPostApi[]) => {
+    const uid = useAuthStore.getState().user?.userId;
+    return rows.map((post) => {
+      const likes = post.likes ?? [];
+      const commentRows = post.comments ?? [];
+      return {
+        id: post.id,
+        author: post.author?.profile?.fullName ?? post.author?.email ?? "Member",
+        content: post.content,
+        imageUrl: post.imageUrl,
+        likeCount: likes.length,
+        commentCount: commentRows.length,
+        likedByMe: uid ? likes.some((l) => l.userId === uid) : false,
+        commentItems: commentRows.map((c) => ({
+          id: c.id,
+          authorName: c.authorName,
+          content: c.content
+        }))
+      };
+    });
+  };
 
   const loadPosts = async () => {
     try {
-      const { data } = await api.get("/community/posts");
+      const client = user ? api : publicApi;
+      const path = user ? "/community/posts" : "/public/community/posts";
+      const { data } = await client.get(path);
       if (data.success) {
-        const uid = useAuthStore.getState().user?.userId;
-        const mapped = (data.data as CommunityPostApi[]).map((post) => {
-          const likes = post.likes ?? [];
-          const commentRows = post.comments ?? [];
-          return {
-            id: post.id,
-            author: post.author?.profile?.fullName ?? post.author?.email ?? "Member",
-            content: post.content,
-            imageUrl: post.imageUrl,
-            likeCount: likes.length,
-            commentCount: commentRows.length,
-            likedByMe: uid ? likes.some((l) => l.userId === uid) : false,
-            commentItems: commentRows.map((c) => ({
-              id: c.id,
-              authorName: c.authorName,
-              content: c.content
-            }))
-          };
-        });
-        setPosts(mapped);
+        setPosts(mapPosts(data.data as CommunityPostApi[]));
       }
     } catch (error) {
       const backendMessage = (error as AxiosError<{ error?: { message?: string } }>)?.response?.data?.error?.message;
@@ -89,7 +99,7 @@ export function CommunityPage() {
       clearTimeout(timer);
       clearInterval(interval);
     };
-  }, []);
+  }, [user]);
 
   const handleImagePick = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -169,47 +179,56 @@ export function CommunityPage() {
 
   return (
     <div className="relative space-y-4">
-      <Card className="glass">
-        <p className="mb-3 text-sm font-medium text-foreground">Create Post</p>
-        <div className="space-y-3">
-          <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Your name" />
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What's on your mind?"
-            className="min-h-24 w-full rounded-2xl border border-border bg-card p-3 text-sm outline-none focus:border-primary"
-          />
-          <Input
-            value={linkUrl}
-            onChange={(e) => setLinkUrl(e.target.value)}
-            placeholder="Link (optional) — https://… or mailto:…"
-          />
-          <div className="space-y-2">
-            <label className="block text-xs text-faint">Picture (optional)</label>
-            <Input
-              value={imageUrlInput}
-              onChange={(e) => {
-                setImageUrlInput(e.target.value);
-                if (e.target.value.trim()) setImageDataUrl("");
-              }}
-              placeholder="Image URL (https://…)"
+      {user ? (
+        <Card className="glass">
+          <p className="mb-3 text-sm font-medium text-foreground">Create Post</p>
+          <div className="space-y-3">
+            <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Your name" />
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="What's on your mind?"
+              className="min-h-24 w-full rounded-2xl border border-border bg-card p-3 text-sm outline-none focus:border-primary"
             />
-            <Input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={handleImagePick} />
-            {imageDataUrl ? (
-              <img src={imageDataUrl} alt="" className="h-28 max-w-full rounded-xl border border-border object-contain" />
-            ) : null}
+            <Input
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="Link (optional) — https://… or mailto:…"
+            />
+            <div className="space-y-2">
+              <label className="block text-xs text-faint">Picture (optional)</label>
+              <Input
+                value={imageUrlInput}
+                onChange={(e) => {
+                  setImageUrlInput(e.target.value);
+                  if (e.target.value.trim()) setImageDataUrl("");
+                }}
+                placeholder="Image URL (https://…)"
+              />
+              <Input type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={handleImagePick} />
+              {imageDataUrl ? (
+                <img src={imageDataUrl} alt="" className="h-28 max-w-full rounded-xl border border-border object-contain" />
+              ) : null}
+            </div>
+            <div className="flex justify-end">
+              <Button className="gap-2" onClick={() => void createPost()}>
+                <PlusCircle className="h-4 w-4" /> {createPostLabel}
+              </Button>
+            </div>
           </div>
-          <div className="flex justify-end">
-            <Button className="gap-2" onClick={() => void createPost()}>
-              <PlusCircle className="h-4 w-4" /> {createPostLabel}
-            </Button>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      ) : (
+        <Card className="glass flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="text-sm text-subtle">{signInToPost}</p>
+          <Link to="/auth">
+            <Button variant="primary" size="sm">{signInLabel}</Button>
+          </Link>
+        </Card>
+      )}
       {posts.map((post) => (
         <PostCard
           key={post.id}
-          postId={post.id}
+          postId={user ? post.id : undefined}
           author={post.author}
           content={post.content}
           imageUrl={post.imageUrl}
@@ -217,9 +236,9 @@ export function CommunityPage() {
           comments={post.commentCount}
           likedByMe={post.likedByMe}
           commentsList={post.commentItems}
-          onToggleLike={() => void handleToggleLike(post.id, post.likedByMe)}
+          onToggleLike={user ? () => void handleToggleLike(post.id, post.likedByMe) : undefined}
           likePending={likeBusyId === post.id}
-          onAddComment={(text) => handleAddComment(post.id, text)}
+          onAddComment={user ? (text) => handleAddComment(post.id, text) : undefined}
           commentSubmitPending={commentBusyId === post.id}
         />
       ))}

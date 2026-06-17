@@ -7,6 +7,9 @@ import { publicApi } from "@/utils/api";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { AxiosError } from "axios";
 import { mapUserMeToProfile } from "@/utils/profile-map";
+import { authReturnPath } from "@/hooks/use-auth-redirect";
+import { useTranslate } from "@/hooks/use-translate";
+import { UI } from "@/i18n/ui";
 
 export function AuthPage() {
   const navigate = useNavigate();
@@ -25,6 +28,16 @@ export function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const browseWithoutAccount = useTranslate(UI.browseWithoutAccount);
+
+  useEffect(() => {
+    const signupMode = (location.state as { mode?: string } | null)?.mode;
+    if (signupMode === "signup") {
+      setMode("signup");
+    }
+  }, [location.state]);
+
+  const afterAuthPath = () => authReturnPath(location.state);
 
   const login = async () => {
     if (!form.email.trim() || !form.password) {
@@ -53,7 +66,7 @@ export function AuthPage() {
               setProfile(mapped);
             }
             if (mapped?.fullName?.trim() && mapped?.city?.trim()) {
-              navigate("/", { replace: true });
+              navigate(afterAuthPath(), { replace: true });
             } else {
               navigate("/profile/setup", { replace: true });
             }
@@ -138,18 +151,20 @@ export function AuthPage() {
       return;
     }
     if (profile?.fullName?.trim() && profile?.city?.trim()) {
-      navigate("/", { replace: true });
+      navigate(afterAuthPath(), { replace: true });
     } else {
       navigate("/profile/setup", { replace: true });
     }
-  }, [user, profile, navigate, location.pathname]);
+  }, [user, profile, navigate, location.pathname, location.state]);
 
   return (
     <div className="mx-auto max-w-lg py-20">
       <Card className="glass">
         <p className="text-xs uppercase tracking-[0.2em] text-primary">Member access</p>
         <h1 className="mt-3 text-3xl font-bold">{mode === "login" ? "Sign in" : "Sign up & create your profile"}</h1>
-        <p className="mt-2 text-sm text-subtle">For community members, rishta, donations, and chat. Staff use a separate sign-in below.</p>
+        <p className="mt-2 text-sm text-subtle">
+          Sign in is optional for browsing. Use an account when you want to donate, post, chat, or send rishta interest.
+        </p>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button variant={mode === "login" ? "primary" : "outline"} onClick={() => setMode("login")}>Login</Button>
           <Button variant={mode === "signup" ? "primary" : "outline"} onClick={() => setMode("signup")}>Sign Up</Button>
@@ -172,6 +187,11 @@ export function AuthPage() {
           {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Sign up & continue"}
         </Button>
         <p className="mt-5 text-center text-sm text-faint">
+          <Link to="/" className="text-amber-200/90 underline-offset-2 hover:underline">
+            {browseWithoutAccount}
+          </Link>
+        </p>
+        <p className="mt-3 text-center text-sm text-faint">
           Admin or moderator?{" "}
           <Link to="/auth/admin" className="text-amber-200/90 underline-offset-2 hover:underline">
             Staff sign in

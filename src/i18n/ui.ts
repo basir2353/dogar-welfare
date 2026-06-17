@@ -15,6 +15,16 @@ export const UI = {
   navAbout: "About us",
   navAdmin: "Admin",
   navSystemAdmin: "System admin",
+  signIn: "Sign in",
+  signUp: "Sign up",
+  browseWithoutAccount: "Continue browsing without an account",
+  guestBrowseHint:
+    "Browse campaigns, profiles, and community posts without signing in. Sign in only when you want to donate, post, chat, or send interest.",
+  signInToAction: "Sign in to continue",
+  signInToDonate: "Sign in to donate",
+  signInToPost: "Sign in to create a post",
+  signInToInterest: "Sign in to send interest or chat",
+  signInOptional: "Optional — sign in when you need an account",
 
   footerOrg: "Dogar Welfare Organization",
   footerTagline: "Trusted families, stronger communities, verified welfare impact.",

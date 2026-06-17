@@ -3,7 +3,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { api, resolveMediaUrl } from "@/utils/api";
+import { api, publicApi, resolveMediaUrl } from "@/utils/api";
+import { useAuthStore } from "@/store/auth-store";
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
+import { useTranslate } from "@/hooks/use-translate";
+import { UI } from "@/i18n/ui";
 import type { AxiosError } from "axios";
 
 type MatrimonialImage = { id: string; url: string; sortOrder: number; isBanner: boolean };
@@ -36,6 +40,10 @@ type ProfileResponse = {
 export function MatrimonialProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const redirectToAuth = useAuthRedirect();
+  const signInToInterest = useTranslate(UI.signInToInterest);
+  const signInLabel = useTranslate(UI.signIn);
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [error, setError] = useState("");
   const [interestNote, setInterestNote] = useState("");
@@ -50,7 +58,9 @@ export function MatrimonialProfilePage() {
     const load = async () => {
       setError("");
       try {
-        const { data: res } = await api.get(`/matrimonial/profile/${userId}`);
+        const client = user ? api : publicApi;
+        const path = user ? `/matrimonial/profile/${userId}` : `/public/matrimonial/profile/${userId}`;
+        const { data: res } = await client.get(path);
         if (res.success) {
           setData(res.data as ProfileResponse);
           setError("");
@@ -64,10 +74,14 @@ export function MatrimonialProfilePage() {
       }
     };
     void load();
-  }, [userId]);
+  }, [userId, user]);
 
   const sendInterest = async () => {
     if (!userId || sending) return;
+    if (!user) {
+      redirectToAuth();
+      return;
+    }
     setSending(true);
     try {
       await api.post("/matrimonial/interests", {
@@ -109,7 +123,7 @@ export function MatrimonialProfilePage() {
         <Button variant="outline" onClick={() => navigate("/matrimonial")}>
           ← Back to matches
         </Button>
-        <Link to={`/chat?with=${data.userId}`}>
+        <Link to={`/chat?with=${data.userId}`} onClick={(e) => { if (!user) { e.preventDefault(); redirectToAuth(); } }}>
           <Button variant="outline">Open chat</Button>
         </Link>
       </div>
@@ -169,26 +183,37 @@ export function MatrimonialProfilePage() {
 
       <Card className="glass p-6">
         <h2 className="text-lg font-semibold">Show interest</h2>
-        <p className="mt-1 text-sm text-subtle">
-          This opens a private chat and sends a short interest message. You can add a note (optional).
-        </p>
-        <Input
-          className="mt-3"
-          placeholder="Optional message with your interest"
-          value={interestNote}
-          onChange={(e) => setInterestNote(e.target.value)}
-          disabled={interestDone}
-        />
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button onClick={() => void sendInterest()} disabled={interestDone || sending}>
-            {interestDone ? "Interest sent" : sending ? "Sending…" : "Send interest & chat"}
-          </Button>
-          {interestDone ? (
-            <Link to={`/chat?with=${data.userId}`}>
-              <Button variant="outline">Go to messages</Button>
+        {user ? (
+          <>
+            <p className="mt-1 text-sm text-subtle">
+              This opens a private chat and sends a short interest message. You can add a note (optional).
+            </p>
+            <Input
+              className="mt-3"
+              placeholder="Optional message with your interest"
+              value={interestNote}
+              onChange={(e) => setInterestNote(e.target.value)}
+              disabled={interestDone}
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button onClick={() => void sendInterest()} disabled={interestDone || sending}>
+                {interestDone ? "Interest sent" : sending ? "Sending…" : "Send interest & chat"}
+              </Button>
+              {interestDone ? (
+                <Link to={`/chat?with=${data.userId}`}>
+                  <Button variant="outline">Go to messages</Button>
+                </Link>
+              ) : null}
+            </div>
+          </>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <p className="text-sm text-subtle">{signInToInterest}</p>
+            <Link to="/auth">
+              <Button variant="primary">{signInLabel}</Button>
             </Link>
-          ) : null}
-        </div>
+          </div>
+        )}
       </Card>
     </div>
   );

@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/cards/profile-card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { api, resolveMediaUrl } from "@/utils/api";
+import { api, publicApi, resolveMediaUrl } from "@/utils/api";
+import { useAuthStore } from "@/store/auth-store";
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
+import { useTranslate } from "@/hooks/use-translate";
+import { UI } from "@/i18n/ui";
 import type { AxiosError } from "axios";
 
 type DiscoverProfile = {
@@ -35,13 +39,18 @@ type DiscoverApiRecord = {
 
 export function MatrimonialPage() {
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const redirectToAuth = useAuthRedirect();
+  const signInToInterest = useTranslate(UI.signInToInterest);
   const [profiles, setProfiles] = useState<DiscoverProfile[]>([]);
   const [sent, setSent] = useState<Record<string, boolean>>({});
   const [message, setMessage] = useState("");
 
   const loadProfiles = useCallback(async () => {
     try {
-      const { data } = await api.get("/matrimonial/discover", { params: { limit: 500 } });
+      const client = user ? api : publicApi;
+      const path = user ? "/matrimonial/discover" : "/public/matrimonial/profiles";
+      const { data } = await client.get(path, { params: { limit: 500 } });
       if (data.success) {
         const list = data.data as DiscoverApiRecord[];
         const mapped = list.map((profile) => ({
@@ -60,7 +69,7 @@ export function MatrimonialPage() {
       const backendMessage = (error as AxiosError<{ error?: { message?: string } }>)?.response?.data?.error?.message;
       setMessage(backendMessage ?? "Unable to load matchmaking profiles. Ensure backend API is running.");
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     void loadProfiles();
@@ -77,6 +86,10 @@ export function MatrimonialPage() {
   }, [loadProfiles]);
 
   const sendInterest = async (profile: DiscoverProfile) => {
+    if (!user) {
+      redirectToAuth();
+      return;
+    }
     try {
       await api.post("/matrimonial/interests", {
         receiverId: profile.userId
@@ -97,13 +110,15 @@ export function MatrimonialPage() {
       <div>
         <h1 className="text-2xl font-semibold">Rishta</h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-subtle">
-          Browsing is for <span className="font-medium text-foreground">other members</span> you may contact — your own
-          account is not listed here (use{" "}
-          <button type="button" className="text-primary underline decoration-primary/40 hover:text-primary/90" onClick={() => navigate("/profile")}>
-            My profile
-          </button>{" "}
-          to see or change your details). The home page “Featured profiles” is public and may show you to
-          everyone; that list is not the same as this match list.
+          Browse verified profiles freely. Sign in only when you want to send interest or start a private chat.
+          {!user ? (
+            <>
+              {" "}
+              <Link to="/auth" className="text-primary underline decoration-primary/40 hover:text-primary/90">
+                {signInToInterest}
+              </Link>
+            </>
+          ) : null}
         </p>
       </div>
     <div className="grid gap-6 lg:grid-cols-[320px_1fr]">

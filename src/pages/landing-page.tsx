@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { ProfileCard } from "@/components/cards/profile-card";
@@ -38,11 +38,16 @@ type PublicLanding = {
 export function LandingPage() {
   const navigate = useNavigate();
   const impact = useImpact();
+  const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
   const [data, setData] = useState<PublicLanding | null>(null);
   const [loadError, setLoadError] = useState(false);
   const errMsg = useTranslate(UI.homeLoadError);
   const loadingMsg = useTranslate(UI.homeLoading);
+  const guestHint = useTranslate(UI.guestBrowseHint);
+  const signInOptional = useTranslate(UI.signInOptional);
+  const signInLabel = useTranslate(UI.signIn);
+  const signUpLabel = useTranslate(UI.signUp);
   const yourProfile = useTranslate(UI.yourProfile);
   const yourProfileHint = useTranslate(UI.yourProfileHint);
   const myProfile = useTranslate(UI.myProfile);
@@ -85,6 +90,27 @@ export function LandingPage() {
 
   return (
     <div className="space-y-24 py-8">
+      {!user ? (
+        <section className="glass rounded-3xl border border-primary/20 p-6 md:p-8">
+          <p className="text-xs uppercase tracking-[0.2em] text-primary">{signInOptional}</p>
+          <p className="mt-3 max-w-3xl text-foreground/80">{guestHint}</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              to="/auth"
+              className={cn(buttonVariants({ variant: "outline", size: "md" }), "inline-flex items-center justify-center")}
+            >
+              {signInLabel}
+            </Link>
+            <Link
+              to="/auth"
+              state={{ mode: "signup" }}
+              className={cn(buttonVariants({ variant: "primary", size: "md" }), "inline-flex items-center justify-center")}
+            >
+              {signUpLabel}
+            </Link>
+          </div>
+        </section>
+      ) : null}
       <section className="grid items-center gap-10 md:grid-cols-2">
         <div>
           <TranslatedText
